@@ -1,9 +1,17 @@
-function App() {
+import {Routes, Route} from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import AddJob from './pages/AddJob'
+import { ToastContainer } from 'react-toastify'
+import EditJob from './pages/EditJob'
+const App = () => {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-blue-600">
-        JobTrack
-      </h1>
+    <div>
+      <ToastContainer />
+      <Routes>
+        <Route path='/dashboard' element={<Dashboard />} />
+        <Route path='/add-job' element={<AddJob />} />
+        <Route path='/edit-job/:id' element={<EditJob />} />
+      </Routes>
     </div>
   )
 }
