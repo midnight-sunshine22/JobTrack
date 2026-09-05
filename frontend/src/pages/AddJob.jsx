@@ -15,7 +15,7 @@ const AddJob = () => {
     const [employmentType,setEmploymentType] = useState('')
     const [salary,setSalary] = useState('')
 
-    const {backendUrl} = useContext(AppContext)
+    const {backendUrl, token} = useContext(AppContext)
 
     const handleSubmit = async(e)=> {
         e.preventDefault()
@@ -27,7 +27,8 @@ const AddJob = () => {
 
         try {
             const {data} = await axios.post(backendUrl+'/job/create',
-                {company,position,status,employmentType,salary}
+                {company,position,status,employmentType,salary}, 
+                {headers: {token}}
             )
 
             if(data.success) {

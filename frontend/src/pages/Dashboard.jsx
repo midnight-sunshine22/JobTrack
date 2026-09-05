@@ -1,248 +1,407 @@
-import { useState } from "react";
+
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useContext } from "react";
-import { AppContext } from "../context/AppContext";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const { backendUrl, token } = useContext(AppContext);
 
-  const { backendUrl } = useContext(AppContext);
-  const [jobs, setJobs] = useState([]);
+    const [jobs, setJobs] = useState([]);
+    const [filter, setFilter] = useState("All");
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("newest");
 
-  const [filter, setFilter] = useState("All");
-  const [search, setSearch] = useState("");
-  const [sort,setSort] = useState("newest")
+    const fetchJobs = async () => {
+        try {
+            const { data } = await axios.get(
+                backendUrl + "/job/all",
+                {
+                    headers: { token }
+                }
+            );
 
-  const fetchJobs = async () => {
-    try {
-      const { data } = await axios.get(backendUrl + "/job/all");
-      if (data.success) {
-        setJobs(data.jobs);
-        console.log(data);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
+            if (data.success) {
+                setJobs(data.jobs);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchstatus = filter === "All" || job.status === filter;
+    const deleteJob = async (id) => {
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this job?"
+        );
 
-    const matchsearch =
-      job.company.toLowerCase().includes(search.toLowerCase()) ||
-      job.position.toLowerCase().includes(search.toLowerCase());
+        if (!confirmDelete) return;
 
-    return matchstatus && matchsearch;
-  });
+        try {
+            const { data } = await axios.delete(
+                backendUrl + `/job/delete/${id}`,
+                {
+                    headers: { token }
+                }
+            );
 
-  const sortedJobs = [...filteredJobs].sort((a,b) => {
-    if(sort==="companyAZ") {
-        return a.company.localeCompare(b.company)
-    }
-    if(sort==="companyZA") {
-        return b.company.localeCompare(a.company)
-    }
-    if(sort==="oldest") {
-        return new Date(a.createdAt) - new Date(b.createdAt)
-    }
-    return new Date(b.createdAt) - new Date(a.createdAt)
-  })
+            if (data.success) {
+                toast.success(data.message);
 
-  const totalJobs = jobs.length;
+                setJobs((prevJobs) =>
+                    prevJobs.filter((job) => job._id !== id)
+                );
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
 
-  const appliedJobs = jobs.filter((job) => job.status === "Applied").length;
+    useEffect(() => {
+        if (token) {
+            fetchJobs();
+        }
+    }, [token]);
 
-  const interviewJobs = jobs.filter((job) => job.status === "Interview").length;
+    // Statistics
+    const totalJobs = jobs.length;
 
-  const offerJobs = jobs.filter((job) => job.status === "Offer").length;
+    const appliedJobs = jobs.filter(
+        (job) => job.status === "Applied"
+    ).length;
 
-  const rejectedJobs = jobs.filter((job)=> job.status==='Rejected').length;
+    const interviewJobs = jobs.filter(
+        (job) => job.status === "Interview"
+    ).length;
 
-  const deleteJob = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this job?")
-    if(!confirmDelete)  return;
-    try {
-      const { data } = await axios.delete(backendUrl + `/job/delete/${id}`);
-      if (data.success) {
-        toast.success(data.message);
-        setJobs((prevJobs) => prevJobs.filter((job) => job._id !== id));
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
+    const offerJobs = jobs.filter(
+        (job) => job.status === "Offer"
+    ).length;
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+    const rejectedJobs = jobs.filter(
+        (job) => job.status === "Rejected"
+    ).length;
 
-  return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-lg shadow">
-          <h3 className="text-gray-500">Total Jobs</h3>
-          <p className="text-3xl font-bold">{totalJobs}</p>
+    // Filter
+    const filteredJobs = jobs.filter((job) => {
+        const matchStatus =
+            filter === "All" || job.status === filter;
+
+        const matchSearch =
+            job.company
+                .toLowerCase()
+                .includes(search.toLowerCase()) ||
+            job.position
+                .toLowerCase()
+                .includes(search.toLowerCase());
+
+        return matchStatus && matchSearch;
+    });
+
+    // Sort
+    const sortedJobs = [...filteredJobs].sort((a, b) => {
+        if (sort === "companyAZ") {
+            return a.company.localeCompare(b.company);
+        }
+
+        if (sort === "companyZA") {
+            return b.company.localeCompare(a.company);
+        }
+
+        if (sort === "oldest") {
+            return (
+                new Date(a.createdAt) -
+                new Date(b.createdAt)
+            );
+        }
+
+        return (
+            new Date(b.createdAt) -
+            new Date(a.createdAt)
+        );
+    });
+
+    const getStatusStyle = (status) => {
+        if (status === "Applied") {
+            return "bg-blue-100 text-blue-700";
+        }
+
+        if (status === "Interview") {
+            return "bg-yellow-100 text-yellow-700";
+        }
+
+        if (status === "Offer") {
+            return "bg-green-100 text-green-700";
+        }
+
+        return "bg-red-100 text-red-700";
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+
+            {/* Dashboard Content */}
+            <main className="max-w-7xl mx-auto px-6 py-8">
+
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800">
+                            Dashboard
+                        </h1>
+
+                        <p className="text-gray-500 mt-1">
+                            Track and manage your job applications
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => navigate("/add-job")}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold transition"
+                    >
+                        + Add Job
+                    </button>
+
+                </div>
+
+                {/* Statistics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+
+                    <div className="bg-white p-5 rounded-xl shadow-sm border">
+                        <p className="text-gray-500 text-sm">
+                            Total Jobs
+                        </p>
+                        <h2 className="text-3xl font-bold text-gray-800 mt-2">
+                            {totalJobs}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl shadow-sm border">
+                        <p className="text-gray-500 text-sm">
+                            Applied
+                        </p>
+                        <h2 className="text-3xl font-bold text-blue-600 mt-2">
+                            {appliedJobs}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl shadow-sm border">
+                        <p className="text-gray-500 text-sm">
+                            Interviews
+                        </p>
+                        <h2 className="text-3xl font-bold text-yellow-600 mt-2">
+                            {interviewJobs}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl shadow-sm border">
+                        <p className="text-gray-500 text-sm">
+                            Offers
+                        </p>
+                        <h2 className="text-3xl font-bold text-green-600 mt-2">
+                            {offerJobs}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl shadow-sm border">
+                        <p className="text-gray-500 text-sm">
+                            Rejected
+                        </p>
+                        <h2 className="text-3xl font-bold text-red-600 mt-2">
+                            {rejectedJobs}
+                        </h2>
+                    </div>
+
+                </div>
+
+                {/* Jobs Section */}
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+
+                    {/* Jobs Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800">
+                                My Jobs
+                            </h2>
+
+                            <p className="text-gray-500 text-sm mt-1">
+                                {sortedJobs.length} job
+                                {sortedJobs.length !== 1 && "s"} found
+                            </p>
+                        </div>
+
+                        {/* Sort */}
+                        <select
+                            className="p-2.5 border rounded-lg text-gray-700 bg-white"
+                            value={sort}
+                            onChange={(e) =>
+                                setSort(e.target.value)
+                            }
+                        >
+                            <option value="newest">
+                                Newest First
+                            </option>
+
+                            <option value="oldest">
+                                Oldest First
+                            </option>
+
+                            <option value="companyAZ">
+                                Company A-Z
+                            </option>
+
+                            <option value="companyZA">
+                                Company Z-A
+                            </option>
+                        </select>
+
+                    </div>
+
+                    {/* Search */}
+                    <input
+                        className="w-full p-3 border rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500"
+                        type="text"
+                        placeholder="Search by company or position..."
+                        value={search}
+                        onChange={(e) =>
+                            setSearch(e.target.value)
+                        }
+                    />
+
+                    {/* Filters */}
+                    <div className="flex gap-2 flex-wrap mb-8">
+
+                        {[
+                            "All",
+                            "Applied",
+                            "Interview",
+                            "Offer",
+                            "Rejected"
+                        ].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setFilter(status)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                    filter === status
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
+
+                    </div>
+
+                    {/* Jobs */}
+                    {sortedJobs.length === 0 ? (
+
+                        <div className="text-center py-16">
+
+                            <h3 className="text-xl font-semibold text-gray-700">
+                                No jobs found
+                            </h3>
+
+                            <p className="text-gray-500 mt-2">
+                                Try changing your search or filter.
+                            </p>
+
+                        </div>
+
+                    ) : (
+
+                        <div className="space-y-4">
+
+                            {sortedJobs.map((job) => (
+
+                                <div
+                                    key={job._id}
+                                    className="border rounded-xl p-5 hover:shadow-md transition"
+                                >
+
+                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+                                        {/* Job Information */}
+                                        <div>
+
+                                            <h3 className="text-xl font-semibold text-gray-800">
+                                                {job.position}
+                                            </h3>
+
+                                            <p className="text-gray-600 mt-1">
+                                                {job.company}
+                                            </p>
+
+                                            <div className="flex flex-wrap items-center gap-3 mt-3">
+
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(
+                                                        job.status
+                                                    )}`}
+                                                >
+                                                    {job.status}
+                                                </span>
+
+                                                <span className="text-sm text-gray-500">
+                                                    {job.employmentType}
+                                                </span>
+
+                                                <span className="text-sm text-gray-500">
+                                                    Salary: {job.salary}
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex gap-2">
+
+                                            <button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/edit-job/${job._id}`
+                                                    )
+                                                }
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                                            >
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                onClick={() =>
+                                                    deleteJob(job._id)
+                                                }
+                                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition"
+                                            >
+                                                Delete
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </main>
+
         </div>
-
-        <div className="bg-white p-5 rounded-lg shadow">
-          <h3 className="text-gray-500">Applied</h3>
-          <p className="text-3xl font-bold">{appliedJobs}</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-lg shadow">
-          <h3 className="text-gray-500">Interviews</h3>
-          <p className="text-3xl font-bold">{interviewJobs}</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-lg shadow">
-          <h3 className="text-gray-500">Offers</h3>
-          <p className="text-3xl font-bold">{offerJobs}</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-lg shadow">
-            <h3 className="text-gray-500">Rejected</h3>
-            <p className="text-3xl font-bold">{rejectedJobs}</p>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Jobs</h1>
-
-        <button
-          className="px-4 py-2 bg-green-500 text-white rounded"
-          onClick={() => navigate("/add-job")}
-        >
-          + Add Job
-        </button>
-      </div>
-
-      <div className="mb-6">
-        <input
-          className="w-full p-3 border rounded-lg mb-4"
-          type="text"
-          placeholder="Search company or position..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <div className="flex gap-2 flex-wrap">
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={() => setFilter("All")}
-          >
-            All
-          </button>
-
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={() => setFilter("Applied")}
-          >
-            Applied
-          </button>
-
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={() => setFilter("Interview")}
-          >
-            Interview
-          </button>
-
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={() => setFilter("Offer")}
-          >
-            Offer
-          </button>
-
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={() => setFilter("Rejected")}
-          >
-            Rejected
-          </button>
-        </div>
-      </div>
-
-    <div className="flex" >
-        <h2 className="font-bold p-3">Sort by:</h2>
-      <select
-    className="p-2 border rounded-lg"
-    value={sort}
-    onChange={(e) => setSort(e.target.value)}
->
-    <option value="newest">Newest First</option>
-    <option value="oldest">Oldest First</option>
-    <option value="companyAZ">Company A-Z</option>
-    <option value="companyZA">Company Z-A</option>
-</select>
-</div>
-
-      {sortedJobs.length===0 ? (
-        <div className="text-center py-10">
-            <h2 className="text-xl font-semibold">
-                No jobs found 
-            </h2>
-            <p className="text-gray-500 mt-2">
-                Try changing search or filter 
-            </p>
-        </div>
-      ): (
-
-      filteredJobs.map((job) => (
-        <div
-          key={job._id}
-          className="bg-white p-5 rounded-lg shadow mb-4 flex justify-between items-center"
-        >
-          <div>
-            <h3 className="text-xl font-semibold">{job.company}</h3>
-            <p className="text-gray-600">{job.position}</p>
-
-            <div className="mt-2 space-y-1 text-sm text-gray-500">
-              <span
-    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-        job.status === "Applied"
-            ? "bg-blue-100 text-blue-700"
-            : job.status === "Interview"
-            ? "bg-yellow-100 text-yellow-700"
-            : job.status === "Offer"
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
-    }`}
->
-    {job.status}
-</span>
-              <p>Employment: {job.employmentType}</p>
-              <p>Salary: {job.salary}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded"
-              onClick={() => deleteJob(job._id)}
-            >
-              Delete Job
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => navigate(`/edit-job/${job._id}`)}
-            >
-              Edit Job
-            </button>
-          </div>
-        </div>
-      ))
-    )}
-
-    </div>
-    
-  );
+    );
 };
 
 export default Dashboard;

@@ -5,7 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const EditJob = () => {
-  const { backendUrl } = useContext(AppContext);
+  const { backendUrl, token } = useContext(AppContext);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ const EditJob = () => {
 
   const fetchJob = async () => {
     try {
-      const { data } = await axios.get(backendUrl + "/job/all");
+      const { data } = await axios.get(backendUrl + "/job/all", {headers:{token}});
       if (data.success) {
         setJobs(data.jobs);
 
@@ -52,7 +52,7 @@ const EditJob = () => {
         status,
         employmentType,
         salary,
-      });
+      }, {headers:{token}});
       if (data.success) {
         toast.success(data.message);
         navigate("/dashboard");
