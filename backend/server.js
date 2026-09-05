@@ -4,6 +4,7 @@ import 'dotenv/config'
 
 import connectDB from './config/mongodb.js'
 import jobRouter from './routes/jobRouter.js'
+import userRouter from './routes/userRouter.js'
 const app=express()
 
 connectDB()
@@ -12,6 +13,7 @@ app.use(express.json())
 app.use(cors())
 
 app.use('/api/job' ,jobRouter)
+app.use('/api/user',userRouter)
 
 app.get('/',(req,res)=> {
     res.send('HOME PAGE')

@@ -3,7 +3,8 @@ import jobModel from "../models/JobModel.js";
 const createJob = async(req,res)=> {
     try {
     const {company, position, status, employmentType, salary} = req.body
-    const newJob = new jobModel({company,position,status,employmentType,salary})
+    const userId = req.userId
+    const newJob = new jobModel({userId,company,position,status,employmentType,salary})
     await newJob.save();
 
     res.json({
@@ -21,7 +22,7 @@ const createJob = async(req,res)=> {
 
 const getJobs = async(req,res)=> {
     try {
-        const jobs = await jobModel.find({})
+        const jobs = await jobModel.find({userId:req.userId})
 
         res.json({
             success:true,
@@ -39,8 +40,17 @@ const getJobs = async(req,res)=> {
 const updateJob = async(req,res)=> {
     try {
     const {id} = req.params 
+    const userId = req.userId
     const {company,position,status,employmentType,salary} = req.body
-    const job=await jobModel.findByIdAndUpdate(id,{company,position,status,employmentType,salary},{new:true})
+    const job=await jobModel.findByIdAndUpdate({_id:id,userId},
+        {company,position,status,employmentType,salary},{new:true})
+
+    if(!job) {
+        return res.json({
+            success:false,
+            message:"Job not found"
+        })
+    }
 
     res.json({
         success:true,
@@ -59,7 +69,8 @@ const updateJob = async(req,res)=> {
 const deleteJob = async(req,res)=> {
     try {
         const {id} = req.params
-        const job=await jobModel.findByIdAndDelete(id);
+        const userId = req.userId
+        const job=await jobModel.findByIdAndDelete({_id:id,userId});
 
         if(!job) {
             return res.json({
