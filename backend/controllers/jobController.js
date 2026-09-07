@@ -1,10 +1,18 @@
 import jobModel from "../models/JobModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 const createJob = async(req,res)=> {
     try {
     const {company, position, status, employmentType, salary} = req.body
+    let resumeUrl = ""
+    if(req.file) {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            resource_type:"raw"
+        })
+        resumeUrl = result.secure_url
+    }
     const userId = req.userId
-    const newJob = new jobModel({userId,company,position,status,employmentType,salary})
+    const newJob = new jobModel({userId,company,position,status,employmentType,salary,resume:resumeUrl})
     await newJob.save();
 
     res.json({
@@ -39,38 +47,69 @@ const getJobs = async(req,res)=> {
 
 const updateJob = async(req,res)=> {
     try {
-    const {id} = req.params 
-    const userId = req.userId
-    const {company,position,status,employmentType,salary} = req.body
-    const job=await jobModel.findByIdAndUpdate({_id:id,userId},
-        {company,position,status,employmentType,salary},{new:true})
+        const {id} = req.params;
+        const userId = req.userId;
 
-    if(!job) {
-        return res.json({
+        const {
+            company,
+            position,
+            status,
+            employmentType,
+            salary
+        } = req.body;
+
+        const findjob = await jobModel.findOne({_id:id, userId});
+
+        if(!findjob) {
+            return res.json({
+                success:false,
+                message:"Job does not exist"
+            });
+        }
+
+        // Update normal fields
+        findjob.company = company;
+        findjob.position = position;
+        findjob.status = status;
+        findjob.employmentType = employmentType;
+        findjob.salary = salary;
+
+        // Only update resume if a new file was selected
+        if(req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                resource_type:"raw"
+            });
+
+            findjob.resume = result.secure_url;
+        }
+
+        await findjob.save();
+
+        res.json({
+            success:true,
+            message:"Updated job successfully",
+            job:findjob
+        });
+
+    } catch(error) {
+        console.log(error.message);
+
+        res.json({
             success:false,
-            message:"Job not found"
-        })
+            message:error.message
+        });
     }
+}
 
-    res.json({
-        success:true,
-        message:"Updated job succesffully",
-        job:job
-    })
-}   catch(error) {
-    console.log(error.message)
-    res.json({
-        success:false,
-        message:error.message
-    })
-}
-}
+
 
 const deleteJob = async(req,res)=> {
     try {
         const {id} = req.params
         const userId = req.userId
         const job=await jobModel.findByIdAndDelete({_id:id,userId});
+
+
 
         if(!job) {
             return res.json({
@@ -90,4 +129,8 @@ const deleteJob = async(req,res)=> {
     }
 }
 
-export {createJob, getJobs, updateJob, deleteJob}
+const getJob = async(req,res) => {
+
+}
+
+export {createJob, getJobs, updateJob, deleteJob, getJob}

@@ -30,6 +30,10 @@ const JobSchema = new mongoose.Schema({
     salary: {
         type: Number,
         required: true
+    },
+    resume: {
+        type: String,
+        default:""
     }
 })
 

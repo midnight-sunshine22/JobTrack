@@ -14,22 +14,36 @@ const AddJob = () => {
     const [status,setStatus] = useState('')
     const [employmentType,setEmploymentType] = useState('')
     const [salary,setSalary] = useState('')
+    const [resume,setResume] = useState(null)
 
     const {backendUrl, token} = useContext(AppContext)
 
     const handleSubmit = async(e)=> {
         e.preventDefault()
+        console.log('clicked')
 
-        if(!company || !position || !status || !employmentType || !salary) {
+        if(!company || !position || !status || !employmentType || !salary || !resume) {
             toast.error("Please fill all required fields")
             return;
         }
 
         try {
+            const formData = new FormData()
+            
+            formData.append("company",company)
+            formData.append("position",position)
+            formData.append("status",status)
+            formData.append("employmentType",employmentType)
+            formData.append("salary",salary)
+
+            if(resume) {
+                formData.append("resume",resume)
+            }
             const {data} = await axios.post(backendUrl+'/job/create',
-                {company,position,status,employmentType,salary}, 
+                formData, 
                 {headers: {token}}
             )
+            console.log(data)
 
             if(data.success) {
                 toast.success(data.message);
@@ -39,6 +53,7 @@ const AddJob = () => {
                 setEmploymentType("")
                 setSalary("")
                 setStatus("")
+                setResume(null)
 
                 navigate('/dashboard')
             } else {
@@ -130,6 +145,19 @@ const AddJob = () => {
                     onChange={(e) => setSalary(e.target.value)}
                 />
             </div>
+
+            <div>
+    <label className="block mb-1 font-medium">
+        Resume (PDF)
+    </label>
+
+    <input
+        className="w-full p-3 border rounded-lg"
+        type="file"
+        accept=".pdf"
+        onChange={(e) => setResume(e.target.files[0])}
+    />
+</div>
 
             <button
                 type="submit"

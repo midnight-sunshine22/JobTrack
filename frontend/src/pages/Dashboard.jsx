@@ -357,6 +357,13 @@ const Dashboard = () => {
                                                     Salary: {job.salary}
                                                 </span>
 
+                                                <span 
+    className="px-3 py-1 rounded-full text-sm font-medium bg-slate-400 text-white cursor-pointer"
+    onClick={() => window.open(job.resume, "_blank")}
+>
+    View resume
+</span>
+
                                             </div>
 
                                         </div>

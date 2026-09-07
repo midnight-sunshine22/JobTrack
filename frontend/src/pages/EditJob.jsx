@@ -14,11 +14,13 @@ const EditJob = () => {
   const [status, setStatus] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [salary, setSalary] = useState("");
+  const [resume,setResume] = useState(null)
 
   const [jobs, setJobs] = useState("");
 
   const fetchJob = async () => {
     try {
+    
       const { data } = await axios.get(backendUrl + "/job/all", {headers:{token}});
       if (data.success) {
         setJobs(data.jobs);
@@ -46,13 +48,18 @@ const EditJob = () => {
       return;
     }
     try {
-      const { data } = await axios.post(backendUrl + `/job/update/${id}`, {
-        company,
-        position,
-        status,
-        employmentType,
-        salary,
-      }, {headers:{token}});
+      const formData = new FormData()
+
+      formData.append('company',company)
+      formData.append('position',position)
+      formData.append('status',status)
+      formData.append('employmentType',employmentType)
+      formData.append('salary',salary)
+
+      if(resume) {
+        formData.append('resume',resume)
+      }
+      const { data } = await axios.post(backendUrl + `/job/update/${id}`, formData, {headers:{token}});
       if (data.success) {
         toast.success(data.message);
         navigate("/dashboard");
@@ -148,6 +155,8 @@ const EditJob = () => {
                     onChange={(e) => setSalary(e.target.value)}
                 />
             </div>
+
+            <div> <label className="block mb-1 font-medium"> Replace Resume (PDF) </label> <input className="w-full p-3 border rounded-lg" type="file" accept=".pdf" onChange={(e) => setResume(e.target.files[0])} /> <p className="text-sm text-gray-500 mt-1"> Leave empty to keep the existing resume. </p> </div>
 
             <button
                 type="submit"
