@@ -130,7 +130,27 @@ const deleteJob = async(req,res)=> {
 }
 
 const getJob = async(req,res) => {
+    try {
+        const {id} = req.params
+        const userId = req.userId
 
+        const job = await jobModel.findOne({_id:id,userId})
+        if(!job) {
+            return res.json({
+                success:false,
+                message:"Job not found"
+            })
+        }
+        res.json({
+            success:true,
+            job
+        })
+    } catch(error) {
+        res.json({
+            success:false,
+            message:error.message
+        })
+    }
 }
 
 export {createJob, getJobs, updateJob, deleteJob, getJob}

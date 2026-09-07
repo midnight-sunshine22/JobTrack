@@ -330,10 +330,17 @@ const Dashboard = () => {
 
                                         {/* Job Information */}
                                         <div>
-
+                                            <div className="flex gap-5">
                                             <h3 className="text-xl font-semibold text-gray-800">
                                                 {job.position}
                                             </h3>
+                                            <span 
+    className="px-3 py-1 rounded-full text-sm font-medium bg-black text-white cursor-pointer"
+    onClick={()=>navigate(`/job-details/${job._id}`)}
+>
+    Full details
+</span>
+                                            </div>
 
                                             <p className="text-gray-600 mt-1">
                                                 {job.company}
