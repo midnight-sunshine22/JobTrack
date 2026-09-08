@@ -6,6 +6,7 @@ import connectDB from './config/mongodb.js'
 import jobRouter from './routes/jobRouter.js'
 import userRouter from './routes/userRouter.js'
 import eventRouter from './routes/applicationEventRouter.js'
+import remainderRoute from './routes/reminderRouter.js'
 
 const app=express()
 
@@ -17,6 +18,7 @@ app.use(cors())
 app.use('/api/job' ,jobRouter)
 app.use('/api/user',userRouter)
 app.use('/api/events',eventRouter)
+app.use('/api/reminders',remainderRoute)
 
 app.get('/',(req,res)=> {
     res.send('HOME PAGE')
