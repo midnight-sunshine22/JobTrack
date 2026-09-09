@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { createContext } from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
 
     // eslint-disable-next-line react-refresh/only-export-components
     export const AppContext = createContext()
@@ -7,12 +9,20 @@ import { createContext } from "react"
 
     
 const AppContextProvider = (props) => {
+    const navigate = useNavigate()
 
     const [token,setToken] = useState((localStorage.getItem('token'))?localStorage.getItem('token'):'')
 
+    const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
 
     const value={
-        backendUrl,token,setToken
+        backendUrl,token,setToken,
+        logout
     }
   return (
     <AppContext.Provider value={value}>
