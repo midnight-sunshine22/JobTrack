@@ -71,4 +71,53 @@ const loginUser = async(req,res) => {
 }
 }
 
-export {registerUser, loginUser}
+const getUser = async(req,res)=> {
+    try {
+        const userId = req.userId
+        const user = await userModel.findById(userId).select('-password')
+        if(!user) {
+            return res.json({
+                success:false,
+                message:"User not found"
+            })
+        }
+
+        res.json({
+            success:true,
+            user 
+        })
+    } catch(error) {
+        res.json({
+            success:false,
+            message:error.message
+        })
+    }
+}
+
+const editUser = async(req,res)=> {
+    try {
+        const userId = req.userId
+        const {name,email} = req.body 
+        const user = await userModel.findByIdAndUpdate(userId,{name,email},{new:true}).select('-password')
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        res.json({
+            success:true,
+            message:"Profile updated successfully",
+            user 
+        })
+    } catch(error) {
+        res.json({
+            success:false,
+            message:error.message
+        })
+    }
+}
+
+export {registerUser, loginUser, getUser, editUser}

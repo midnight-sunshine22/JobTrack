@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import Navbar from './components/Navbar'
 import JobDetails from './pages/JobDetails'
+import MyProfilePage from './pages/MyProfilePage'
 const App = () => {
   return (
     <div>
@@ -20,6 +21,7 @@ const App = () => {
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
         <Route path='/job-details/:id' element={<JobDetails />} />
+        <Route path='/profile' element={<MyProfilePage />} />
       </Routes>
     </div>
   )
