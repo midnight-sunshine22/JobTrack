@@ -7,6 +7,7 @@ import jobRouter from './routes/jobRouter.js'
 import userRouter from './routes/userRouter.js'
 import eventRouter from './routes/applicationEventRouter.js'
 import remainderRoute from './routes/reminderRouter.js'
+import notificationRouter from './routes/notificationRouter.js'
 
 const app=express()
 
@@ -19,6 +20,7 @@ app.use('/api/job' ,jobRouter)
 app.use('/api/user',userRouter)
 app.use('/api/events',eventRouter)
 app.use('/api/reminders',remainderRoute)
+app.use('/api/notification',notificationRouter)
 
 app.get('/',(req,res)=> {
     res.send('HOME PAGE')

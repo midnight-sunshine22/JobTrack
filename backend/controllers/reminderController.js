@@ -1,5 +1,5 @@
-import reminderModel from "../models/Reminder.js"
-
+import reminderModel from "../models/ReminderModel.js"
+import notificationModel from "../models/NotificationModel.js"
 
 const createReminder = async (req, res) => {
     try {
@@ -15,6 +15,9 @@ const createReminder = async (req, res) => {
         })
 
         await reminder.save()
+        const notification = new notificationModel({userId,reminderId:reminder._id,message:note})
+
+        await notification.save()
 
         res.json({
             success: true,
